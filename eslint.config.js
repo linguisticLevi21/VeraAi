@@ -1,0 +1,50 @@
+import js from '@eslint/js';
+
+export default [
+  js.configs.recommended,
+  {
+    files: ['**/*.js'],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: 'commonjs',
+      globals: {
+        process: 'readonly',
+        console: 'readonly',
+        Buffer: 'readonly',
+        __dirname: 'readonly',
+        __filename: 'readonly',
+        module: 'writable',
+        require: 'readonly',
+        exports: 'writable',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        setInterval: 'readonly',
+        clearInterval: 'readonly',
+        Date: 'readonly',
+        Math: 'readonly',
+        Number: 'readonly',
+        Array: 'readonly',
+        Object: 'readonly',
+        Error: 'readonly',
+        Promise: 'readonly',
+        Map: 'readonly',
+        Set: 'readonly',
+        JSON: 'readonly',
+        String: 'readonly',
+      },
+    },
+    rules: {
+      'no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+      'no-console': 'warn',
+      'no-var': 'error',
+      'prefer-const': 'error',
+      eqeqeq: ['error', 'always'],
+      curly: ['error', 'all'],
+      'no-throw-literal': 'error',
+      'no-return-await': 'warn',
+    },
+  },
+  {
+    ignores: ['node_modules/**', 'logs/**', 'coverage/**', 'dist/**'],
+  },
+];
