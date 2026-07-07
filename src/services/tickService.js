@@ -57,8 +57,8 @@ async function processTick({ now, availableTriggers, log = logger }) {
     }
   }
 
-  // Step 4 — DecisionEngine (currently a placeholder returning [])
-  const actions = await engine.evaluateTick({ now, availableTriggers });
+  // Step 4 — DecisionEngine: full AI reasoning pipeline
+  const actions = await engine.evaluateTick({ now, availableTriggers, resolvedTriggers });
 
   // Step 5 — enforce cap
   const capped = actions.slice(0, MAX_ACTIONS_PER_TICK);
