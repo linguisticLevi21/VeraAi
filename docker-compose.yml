@@ -1,0 +1,82 @@
+version: "3.9"
+
+services:
+  # ── Production bot ─────────────────────────────────────────────────────────
+  vera-bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    image: vera-bot:latest
+    container_name: vera-bot
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      LOG_LEVEL: info
+      LOG_DIR: /app/logs
+      RATE_LIMIT_WINDOW_MS: 60000
+      RATE_LIMIT_MAX: 300
+      MAX_CONTEXT_SIZE_BYTES: 524288
+      # Bot identity — override these for your submission
+      TEAM_NAME: "${TEAM_NAME:-Team Vera}"
+      TEAM_MEMBERS: "${TEAM_MEMBERS:-Your Name}"
+      BOT_MODEL: vera-deterministic-engine-v1
+      BOT_APPROACH: "Deterministic 8-step reasoning pipeline. No LLM."
+      BOT_VERSION: "${BOT_VERSION:-1.0.0}"
+      CONTACT_EMAIL: "${CONTACT_EMAIL:-team@example.com}"
+    volumes:
+      - vera-logs:/app/logs
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/v1/healthz"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+    networks:
+      - vera-network
+
+  # ── Development bot (hot-reload via nodemon) ────────────────────────────────
+  vera-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    image: vera-bot:dev
+    container_name: vera-bot-dev
+    restart: unless-stopped
+    profiles:
+      - dev
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      LOG_LEVEL: debug
+      LOG_DIR: /app/logs
+      RATE_LIMIT_WINDOW_MS: 60000
+      RATE_LIMIT_MAX: 999
+      MAX_CONTEXT_SIZE_BYTES: 524288
+      TEAM_NAME: "Team Vera (Dev)"
+      TEAM_MEMBERS: "Developer"
+      BOT_MODEL: vera-deterministic-engine-v1
+      BOT_APPROACH: "Deterministic 8-step pipeline (dev)"
+      BOT_VERSION: "dev"
+      CONTACT_EMAIL: "dev@example.com"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - vera-dev-logs:/app/logs
+    command: ["node_modules/.bin/nodemon", "server.js"]
+    networks:
+      - vera-network
+
+volumes:
+  vera-logs:
+  vera-dev-logs:
+
+networks:
+  vera-network:
+    driver: bridge

@@ -1,0 +1,45 @@
+# Render.com deployment configuration
+# Deploy: connect your GitHub repo → Render auto-detects this file
+# Docs: https://render.com/docs/render-yaml
+
+services:
+  - type: web
+    name: vera-bot
+    runtime: node
+    region: singapore  # closest to Indian judge infrastructure
+    plan: starter       # upgrade to standard for production load
+
+    # Build
+    buildCommand: npm ci --omit=dev
+    startCommand: node server.js
+
+    # Auto-deploy on every push to main
+    autoDeploy: true
+
+    # Health check — mirrors the judge's liveness probe
+    healthCheckPath: /v1/healthz
+
+    # Environment
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "10000"   # Render sets PORT automatically; this is the fallback
+      - key: LOG_LEVEL
+        value: info
+      - key: LOG_DIR
+        value: /tmp/logs   # Render has ephemeral filesystem; use /tmp for logs
+      - key: RATE_LIMIT_WINDOW_MS
+        value: "60000"
+      - key: RATE_LIMIT_MAX
+        value: "300"
+      - key: MAX_CONTEXT_SIZE_BYTES
+        value: "524288"
+      - key: BOT_MODEL
+        value: vera-deterministic-engine-v1
+      - key: BOT_APPROACH
+        value: "Deterministic 8-step reasoning pipeline. No LLM. Same input always produces same output."
+      - key: BOT_VERSION
+        value: "1.0.0"
+      # Set these in the Render dashboard (Secrets):
+      # TEAM_NAME, TEAM_MEMBERS, CONTACT_EMAIL, BOT_SUBMITTED_AT

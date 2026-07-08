@@ -100,7 +100,9 @@ class MemoryStore {
         lastCampaign: null,
         lastHook: null,
         lastStrategy: null,
+        lastKey: null,        // the suppression_key of the last outbound message
       },
+      autoReplyConsecutive: 0,  // consecutive identical-body auto-replies; part of schema
       lastUpdated: now,
       timestamps: {
         createdAt: now,

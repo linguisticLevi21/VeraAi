@@ -57,8 +57,24 @@ async function processTick({ now, availableTriggers, log = logger }) {
     }
   }
 
-  // Step 4 — DecisionEngine: full AI reasoning pipeline
-  const actions = await engine.evaluateTick({ now, availableTriggers, resolvedTriggers });
+  // Step 4 — DecisionEngine: full AI reasoning pipeline (guarded by 25s SLA timeout)
+  const TICK_TIMEOUT_MS = 25_000;
+  let actions;
+  try {
+    actions = await Promise.race([
+      engine.evaluateTick({ now, availableTriggers, resolvedTriggers }),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('tick_timeout')), TICK_TIMEOUT_MS)
+      ),
+    ]);
+  } catch (err) {
+    if (err.message === 'tick_timeout') {
+      log.warn('TickService: evaluateTick timed out after 25s — returning empty actions');
+      actions = [];
+    } else {
+      throw err;
+    }
+  }
 
   // Step 5 — enforce cap
   const capped = actions.slice(0, MAX_ACTIONS_PER_TICK);

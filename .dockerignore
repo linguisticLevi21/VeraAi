@@ -1,0 +1,50 @@
+# Docker ignore — keeps the build context lean and fast
+
+# Version control
+.git
+.gitignore
+
+# Dev dependencies and tooling
+node_modules
+.eslintrc*
+eslint.config.js
+nodemon.json
+*.log
+
+# Test suite (not needed in production image)
+tests/
+
+# Docs and challenge materials (not deployed)
+docs/
+*.md
+challenge-brief.md
+challenge-testing-brief.md
+engagement-design.md
+engagement-research.md
+dataset/
+examples/
+expanded/
+judge_simulator.py
+
+# Environment (never bake .env into the image)
+.env
+.env.*
+!.env.example
+
+# IDE files
+.vscode/
+.idea/
+*.iml
+
+# OS noise
+.DS_Store
+Thumbs.db
+
+# Competitive programming files (unrelated to this project)
+*.cpp
+.cph/
+
+# Temporary files
+tmp/
+*.tmp
+*.cache

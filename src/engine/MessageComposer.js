@@ -108,6 +108,13 @@ class MessageComposer {
 
       const name = merchant.identity && merchant.identity.name || '';
       const anchor = name ? `${name}, ` : '';
+
+      // If after stripping the body is too short to be meaningful, use a grounded fallback
+      if (cleaned.length < 20) {
+        const scope = merchant.scope || (category && category.slug) || 'your business';
+        return `${anchor}there's a specific opportunity on Magicpin that could drive more customers to ${scope === anchor.trim().replace(',', '') ? 'your business' : scope} right now. Want me to walk you through it?`;
+      }
+
       return `${anchor}${cleaned}`;
     }
 

@@ -16,6 +16,7 @@ class EngagementStrategy extends BaseStrategy {
     const kind = trigger.kind || trigger.type || '';
     if (kind === 'research_digest' || kind === 'industry_update' || kind === 'peer_benchmark') return 0.85;
     if (kind === 'milestone' || kind === 'celebration') return 0.7;
+    if (kind === 'perf_spike') return 0.75; // celebrate a performance spike
     return 0;
   }
 

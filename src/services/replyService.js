@@ -18,13 +18,12 @@ const engine = new ReplyEngine(contextStore, conversationStore);
  *   2. Ensure the conversation exists in ConversationStore (stub if needed).
  *   3. Record the inbound message in ConversationManager (updates merchant-level history).
  *   4. Detect auto-reply and intent signals from ConversationManager.
- *   5. Delegate to ReplyEngine for the next action (currently returns placeholder).
+ *   5. Delegate to ReplyEngine — full 8-step AI reasoning pipeline:
+ *        Signal extraction → Inference → ReplayGuard → Strategy selection →
+ *        Ranking → Composition → Suppression → MessageComposer → FinalAction.
  *   6. If action='send', record the outbound message in ConversationManager.
- *   7. Update reply analytics.
+ *   7. Update reply analytics (Welford rolling-average latency).
  *   8. Persist conversation state transitions in ConversationStore.
- *
- * NOTE: AI reply generation is NOT implemented yet. The ReplyEngine returns a
- * placeholder action. All memory loading and storage is fully functional.
  *
  * @param {object}      params
  * @param {string}      params.conversationId
@@ -132,6 +131,7 @@ async function processReply({
       rationale: replyAction.rationale,
       triggerId: conv.triggerId,
       strategy: replyAction.strategy || null,
+      suppression_key: replyAction.suppression_key || null,
       log,
     });
   }

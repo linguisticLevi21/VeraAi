@@ -1,9 +1,39 @@
+# Dependencies
 node_modules/
+
+# Logs
 logs/
-.env
 *.log
+
+# Environment variables (never commit secrets)
+.env
+.env.local
+.env.production
+
+# Build output
 dist/
-.DS_Store
-Thumbs.db
+build/
+
+# Coverage
 coverage/
 .nyc_output/
+
+# OS noise
+.DS_Store
+Thumbs.db
+
+# IDE / editor
+.vscode/
+.idea/
+*.iml
+*.suo
+*.user
+
+# Competitive programming files (unrelated to this project)
+*.cpp
+.cph/
+
+# Temporary
+tmp/
+*.tmp
+*.cache

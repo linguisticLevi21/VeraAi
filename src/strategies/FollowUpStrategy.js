@@ -83,7 +83,7 @@ class FollowUpStrategy extends BaseStrategy {
       restaurants: {
         content: offerLabel
           ? `Your ${offerLabel} offer is already live — I've drafted a WhatsApp message your team can send to your customer list: "Weekend is here! ${offerLabel} — valid today and tomorrow. Order now!"`
-          : `Here's a ready-to-send weekend special message: "Weekend Special: [Your Dish] Combo at [Price]. Book your table or order online now!"`,
+          : 'Here\'s a ready-to-send weekend special message: "Weekend Special: Try our signature combo, available today and tomorrow only. Order now or book your table!"',
         nextStep: 'Want me to personalise it with your restaurant name and timings?',
       },
       salons: {

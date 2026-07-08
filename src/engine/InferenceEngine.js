@@ -38,6 +38,7 @@ class InferenceEngine {
         'Merchant has declined — gracefully exit this conversation.',
         1,
         () => 1.0,
+        ['merchant_replied_no'],
       ],
       [
         () => byType.has('trigger_expired'),
@@ -45,6 +46,7 @@ class InferenceEngine {
         'The trigger has expired — do not act on it.',
         1,
         () => 1.0,
+        ['trigger_expired'],
       ],
       [
         () => byType.has('merchant_auto_reply'),
@@ -52,6 +54,7 @@ class InferenceEngine {
         'Merchant appears to have a WhatsApp auto-reply active — back off.',
         1,
         () => 0.95,
+        ['merchant_auto_reply'],
       ],
 
       // ── Affirmative / intent ─────────────────────────────────────────────
@@ -61,6 +64,7 @@ class InferenceEngine {
         'Merchant has expressed readiness — deliver the promised value immediately.',
         1,
         () => 0.95,
+        ['merchant_replied_yes', 'merchant_intent_join'],
       ],
       [
         () => byType.has('merchant_asked_question'),
@@ -68,6 +72,7 @@ class InferenceEngine {
         'Merchant asked a question — answer it precisely, then re-state the CTA.',
         1,
         () => 0.9,
+        ['merchant_asked_question'],
       ],
 
       // ── Conversation continuity ──────────────────────────────────────────
@@ -77,6 +82,7 @@ class InferenceEngine {
         'Merchant has not replied in 48h — send a gentle follow-up or close gracefully.',
         2,
         () => by('conversation_stalled', byType).confidence,
+        ['conversation_stalled'],
       ],
       [
         () => byType.has('merchant_not_replied_24h'),
@@ -84,6 +90,7 @@ class InferenceEngine {
         'Merchant has not replied in 24h — consider a soft nudge.',
         2,
         () => 0.75,
+        ['merchant_not_replied_24h'],
       ],
 
       // ── Visibility & performance ─────────────────────────────────────────
@@ -93,6 +100,7 @@ class InferenceEngine {
         'Merchant CTR is critically below peers — needs immediate visibility intervention.',
         1,
         () => by('ctr_critically_below_peer', byType).confidence,
+        ['ctr_critically_below_peer'],
       ],
       [
         () => byType.has('ctr_below_peer'),
@@ -100,6 +108,7 @@ class InferenceEngine {
         'Merchant CTR is below peer median — a targeted offer or campaign would help.',
         2,
         () => by('ctr_below_peer', byType).confidence,
+        ['ctr_below_peer'],
       ],
       [
         () => byType.has('views_declining'),
@@ -107,6 +116,7 @@ class InferenceEngine {
         'Merchant views declined over 20% last week — performance recovery needed.',
         1,
         () => 0.9,
+        ['views_declining'],
       ],
       [
         () => byType.has('views_softening'),
@@ -114,6 +124,7 @@ class InferenceEngine {
         'Merchant views slightly softened — monitoring; consider a proactive boost.',
         3,
         () => 0.75,
+        ['views_softening'],
       ],
       [
         () => byType.has('low_visibility'),
@@ -121,6 +132,7 @@ class InferenceEngine {
         'Merchant has very few views — visibility is the top priority.',
         2,
         () => 0.8,
+        ['low_visibility'],
       ],
 
       // ── Offers ───────────────────────────────────────────────────────────
@@ -130,6 +142,7 @@ class InferenceEngine {
         'An active offer expires within 24h — extend it or leverage urgency.',
         1,
         () => 0.95,
+        ['offer_expiring_soon'],
       ],
       [
         () => byType.has('offer_expiring_in_3d'),
@@ -137,6 +150,7 @@ class InferenceEngine {
         'An offer expires within 3 days — now is the time to promote it.',
         2,
         () => 0.85,
+        ['offer_expiring_in_3d'],
       ],
       [
         () => byType.has('offer_expired'),
@@ -144,6 +158,7 @@ class InferenceEngine {
         'The current offer has expired — merchant should launch a new one.',
         2,
         () => 0.9,
+        ['offer_expired'],
       ],
       [
         () => byType.has('no_active_offers'),
@@ -151,6 +166,7 @@ class InferenceEngine {
         'Merchant has no active offers — a new offer could drive footfall.',
         3,
         () => 0.7,
+        ['no_active_offers'],
       ],
 
       // ── Customers ────────────────────────────────────────────────────────
@@ -160,6 +176,7 @@ class InferenceEngine {
         'Majority of customers are lapsed — recall campaign is the highest-value action.',
         1,
         () => by('inactive_customers', byType, 'customer_long_inactive').confidence,
+        ['inactive_customers', 'customer_long_inactive'],
       ],
       [
         () => byType.has('some_customers_inactive') || byType.has('customer_inactive_30d'),
@@ -167,6 +184,7 @@ class InferenceEngine {
         'A portion of customers have gone quiet — a win-back message would be timely.',
         2,
         () => 0.75,
+        ['some_customers_inactive', 'customer_inactive_30d'],
       ],
 
       // ── Reviews / reputation ─────────────────────────────────────────────
@@ -176,6 +194,7 @@ class InferenceEngine {
         'Merchant rating has dropped — addressing reviews is urgent.',
         1,
         () => 0.95,
+        ['rating_dropped'],
       ],
       [
         () => byType.has('review_spike'),
@@ -183,6 +202,7 @@ class InferenceEngine {
         'A spike in reviews detected — merchant should acknowledge and respond.',
         2,
         () => 0.8,
+        ['review_spike'],
       ],
 
       // ── Campaigns ────────────────────────────────────────────────────────
@@ -192,6 +212,7 @@ class InferenceEngine {
         'Running campaign is underperforming — a mid-course adjustment may help.',
         2,
         () => 0.8,
+        ['campaign_underperforming'],
       ],
       [
         () => byType.has('campaign_completed'),
@@ -199,6 +220,7 @@ class InferenceEngine {
         'Campaign has ended — celebrate or propose a follow-up campaign.',
         3,
         () => 0.85,
+        ['campaign_completed'],
       ],
 
       // ── Triggers ─────────────────────────────────────────────────────────
@@ -208,6 +230,7 @@ class InferenceEngine {
         'A new research digest is available — share the most relevant excerpt.',
         2,
         () => 0.9,
+        ['trigger_research_digest'],
       ],
       [
         () => byType.has('trigger_recall_due'),
@@ -215,6 +238,7 @@ class InferenceEngine {
         'A customer recall trigger is active — reach out now.',
         2,
         () => 0.9,
+        ['trigger_recall_due'],
       ],
       [
         () => byType.has('trigger_perf_spike'),
@@ -222,6 +246,7 @@ class InferenceEngine {
         'A performance spike trigger is available — celebrate and leverage momentum.',
         3,
         () => 0.85,
+        ['trigger_perf_spike'],
       ],
       [
         () => byType.has('trigger_festival_upcoming'),
@@ -229,6 +254,7 @@ class InferenceEngine {
         'A festival trigger is active — tailor the message to the occasion.',
         2,
         () => 0.85,
+        ['trigger_festival_upcoming'],
       ],
 
       // ── Temporal ─────────────────────────────────────────────────────────
@@ -238,6 +264,7 @@ class InferenceEngine {
         'Weekend is approaching — a well-timed offer can drive significant traffic.',
         3,
         () => 0.8,
+        ['weekend_approaching'],
       ],
       [
         () =>
@@ -248,6 +275,7 @@ class InferenceEngine {
         'Festival season detected — tailor messaging to the occasion for higher conversion.',
         3,
         () => 0.75,
+        ['festival_season_diwali', 'festival_season_christmas', 'festival_season_eid'],
       ],
 
       // ── Operational ──────────────────────────────────────────────────────
@@ -257,6 +285,7 @@ class InferenceEngine {
         'Merchant profile has stale posts — updating content would improve visibility.',
         3,
         () => 0.8,
+        ['stale_posts'],
       ],
       [
         () => byType.has('high_cancellation'),
@@ -264,6 +293,7 @@ class InferenceEngine {
         'High cancellation rate detected — operational improvement advice is needed.',
         2,
         () => 0.85,
+        ['high_cancellation'],
       ],
 
       // ── Default / growth ─────────────────────────────────────────────────
@@ -273,6 +303,7 @@ class InferenceEngine {
         'Merchant is performing above peers — celebrate and suggest next-level growth action.',
         4,
         () => 0.85,
+        ['ctr_high_performing'],
       ],
       [
         () => byType.has('trigger_high_urgency'),
@@ -280,13 +311,15 @@ class InferenceEngine {
         'A high-urgency trigger is active — act on it before anything else.',
         1,
         () => 1.0,
+        ['trigger_high_urgency'],
       ],
     ];
 
-    for (const [condition, key, label, priority, confFn] of rules) {
+    for (const [condition, key, label, priority, confFn, signalKeys] of rules) {
       if (condition()) {
         const confidence = typeof confFn === 'function' ? confFn() : confFn;
-        const triggerSignals = signals.filter((s) => condition.toString().includes(s.type)).map((s) => s.type);
+        // Only include signal types that are explicitly declared for this rule AND actually present
+        const triggerSignals = (signalKeys || []).filter((k) => byType.has(k));
         observations.push({ observation: key, label, confidence, triggerSignals, priority });
       }
     }

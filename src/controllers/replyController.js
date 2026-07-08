@@ -45,6 +45,11 @@ async function replyHandler(req, res, next) {
       log: req.log,
     });
 
+    // Enrich observability log
+    res.locals.observability.merchantId = merchant_id;
+    res.locals.observability.strategy = replyAction.strategy || null;
+    res.locals.observability.confidence = replyAction.confidence || null;
+
     return success(res, replyAction);
   } catch (err) {
     return next(err);

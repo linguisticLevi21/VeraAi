@@ -32,6 +32,13 @@ async function tickHandler(req, res, next) {
       log: req.log,
     });
 
+    // Enrich observability log with first action details
+    if (result.actions && result.actions.length > 0) {
+      const first = result.actions[0];
+      res.locals.observability.merchantId = first.merchant_id;
+      res.locals.observability.strategy = first.template_name;
+    }
+
     return success(res, result);
   } catch (err) {
     return next(err);

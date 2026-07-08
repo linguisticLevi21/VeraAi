@@ -1,5 +1,7 @@
 'use strict';
 
+const { MAX_TURNS_PER_CONVERSATION } = require('../config/constants');
+
 /**
  * ReplayGuard — handles all cases where the merchant's reply requires a
  * special path instead of normal strategy execution.
@@ -29,8 +31,9 @@ class ReplayGuard {
    * @param {number}      params.turnNumber
    * @returns {GuardDecision | null}  null = proceed normally
    */
-  evaluate({ message, fromRole, isAutoReply, consecutiveAutoReplies, merchant, observations, turnNumber }) {
+  evaluate({ message, fromRole, isAutoReply, consecutiveAutoReplies, merchant, observations, turnNumber, now }) {
     const obsSet = new Set(observations.map((o) => o.observation));
+    const nowMs = now ? new Date(now).getTime() : Date.now();
 
     // ── Rule 1: Explicit refusal / negative / hostile ───────────────────────
     if (obsSet.has('merchant_refused')) {
@@ -73,7 +76,6 @@ class ReplayGuard {
     }
 
     // ── Rule 5: Conversation exhausted (max turns) ─────────────────────────
-    const { MAX_TURNS_PER_CONVERSATION } = require('../config/constants');
     if (turnNumber >= MAX_TURNS_PER_CONVERSATION) {
       return {
         action: 'end',
@@ -83,12 +85,12 @@ class ReplayGuard {
       };
     }
 
-    // ── Rule 6: Merchant stalled > 72h — close unless high value ───────────
+    // ── Rule 6: Merchant stalled > 72h — close unless high value ───────────────
     if (obsSet.has('conversation_stalled')) {
       const history = merchant.conversationHistory || [];
       const lastVera = [...history].reverse().find((m) => m.speaker === 'vera');
       if (lastVera) {
-        const hoursElapsed = (Date.now() - new Date(lastVera.storedAt || lastVera.timestamp || 0).getTime()) / 3_600_000;
+        const hoursElapsed = (nowMs - new Date(lastVera.storedAt || lastVera.timestamp || 0).getTime()) / 3_600_000;
         if (hoursElapsed > 72) {
           return {
             action: 'end',

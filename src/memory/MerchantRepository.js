@@ -214,6 +214,8 @@ class MerchantRepository {
         payload: { ...payload },
         storedAt: new Date().toISOString(),
       });
+      // Mark the triggerMap cache as dirty so next access rebuilds it
+      m._triggerMapDirty = true;
       m.lastUpdated = new Date().toISOString();
     }
 
@@ -247,20 +249,22 @@ class MerchantRepository {
     const m = memoryStore.getMerchant(merchantId);
     if (!m) return null;
 
-    const triggerEntry = m.triggerHistory.find((t) => t.triggerId === triggerId);
-    const trigger = triggerEntry ? triggerEntry.payload : null;
+    // O(1) lookup via triggerMap index (built lazily, invalidated by dirty flag)
+    if (!m._triggerMap || m._triggerMapDirty) {
+      m._triggerMap = new Map();
+      for (const t of m.triggerHistory) {
+        m._triggerMap.set(t.triggerId, t.payload);
+      }
+      m._triggerMapDirty = false;
+    }
+    const trigger = m._triggerMap.get(triggerId) || null;
 
     let customer = null;
     if (trigger && trigger.customer_id) {
       customer = m.customerContexts.get(trigger.customer_id) || null;
     }
 
-    return {
-      merchant: m,
-      category: m.category,
-      trigger,
-      customer,
-    };
+    return { merchant: m, category: m.category, trigger, customer };
   }
 
   /**
@@ -283,13 +287,28 @@ class MerchantRepository {
    * @returns {Array<{ merchantId, triggerId, payload }>}
    */
   resolveActiveTriggers(triggerIds) {
+    if (!triggerIds || triggerIds.length === 0) return [];
+
+    // O(1) lookup via Set
+    const triggerSet = new Set(triggerIds);
     const results = [];
+
     for (const merchantId of memoryStore.allMerchantIds()) {
       const m = memoryStore.getMerchant(merchantId);
       if (!m) continue;
-      for (const entry of m.triggerHistory) {
-        if (triggerIds.includes(entry.triggerId)) {
-          results.push({ merchantId, triggerId: entry.triggerId, payload: entry.payload });
+
+      // Rebuild _triggerMap only when dirty flag is set (avoids costly rebuilds on every tick)
+      if (!m._triggerMap || m._triggerMapDirty) {
+        m._triggerMap = new Map();
+        for (const t of m.triggerHistory) {
+          m._triggerMap.set(t.triggerId, t.payload);
+        }
+        m._triggerMapDirty = false;
+      }
+
+      for (const [triggerId, payload] of m._triggerMap) {
+        if (triggerSet.has(triggerId)) {
+          results.push({ merchantId, triggerId, payload });
         }
       }
     }

@@ -92,9 +92,10 @@ class ConversationManager {
    * @param {string}      params.rationale
    * @param {string}      params.triggerId
    * @param {string}      params.strategy
+   * @param {string}      [params.suppression_key]
    * @param {object}      [params.log]
    */
-  recordOutbound({ merchantId, conversationId, body, cta, rationale, triggerId, strategy, log = logger }) {
+  recordOutbound({ merchantId, conversationId, body, cta, rationale, triggerId, strategy, suppression_key, log = logger }) {
     const m = memoryStore.getOrCreate(merchantId);
     const now = new Date().toISOString();
 
@@ -103,6 +104,7 @@ class ConversationManager {
       speaker: 'vera',
       body,
       cta,
+      suppression_key: suppression_key || null, // stored so SuppressionEngine loop detection works
       rationale,
       triggerId,
       intent: 'outbound',
@@ -122,8 +124,9 @@ class ConversationManager {
       sentAt: now,
     });
 
-    // Update suppression keys
+    // Update suppression keys — store both triggerId and the actual suppression key
     m.suppressionKeys.lastTrigger = triggerId || null;
+    m.suppressionKeys.lastKey = suppression_key || null;  // ← used by SuppressionEngine Rule 2
     m.suppressionKeys.lastCta = cta || null;
     m.suppressionKeys.lastStrategy = strategy || null;
 
@@ -197,7 +200,7 @@ class ConversationManager {
    */
   getAutoReplyCount(merchantId) {
     const m = memoryStore.getMerchant(merchantId);
-    return m ? (m._autoReplyConsecutive || 0) : 0;
+    return m ? (m.autoReplyConsecutive || 0) : 0;
   }
 
   // ---------------------------------------------------------------------------
@@ -221,7 +224,8 @@ class ConversationManager {
       .filter((msg) => msg.speaker === 'merchant')
       .slice(-AUTO_REPLY_THRESHOLD);
 
-    if (recent.length < 2) return false;
+    // Require AT LEAST AUTO_REPLY_THRESHOLD identical messages (not just 2)
+    if (recent.length < AUTO_REPLY_THRESHOLD) return false;
 
     // Identical to all recent merchant messages → auto-reply
     return recent.every((msg) => msg.body.trim().toLowerCase() === normalised);
@@ -238,11 +242,11 @@ class ConversationManager {
    */
   _updateAutoReplyCounter(m, body, isAutoReply) {
     if (isAutoReply) {
-      m._autoReplyConsecutive = (m._autoReplyConsecutive || 0) + 1;
+      m.autoReplyConsecutive = (m.autoReplyConsecutive || 0) + 1;
     } else {
-      m._autoReplyConsecutive = 0;
+      m.autoReplyConsecutive = 0;
     }
-    return m._autoReplyConsecutive;
+    return m.autoReplyConsecutive;
   }
 
   /**
