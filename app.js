@@ -32,7 +32,10 @@ function createApp() {
       crossOriginEmbedderPolicy: false,
     })
   );
-  app.use(cors({ origin: '*', methods: ['GET', 'POST'] }));
+  app.use(cors({ origin: '*', methods: ['GET', 'POST', 'OPTIONS'] }));
+
+  // Root route — keeps Render's own health checker and browsers happy
+  app.get('/', (req, res) => res.redirect(301, `${API_PREFIX}/healthz`));
 
   // ── Body parsing ──────────────────────────────────────────────────────────
   // express.json enforces the max context size from config.
