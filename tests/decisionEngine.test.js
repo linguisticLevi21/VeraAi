@@ -542,9 +542,9 @@ test('suppresses when key is already in session set', () => {
   assert.ok(result.reason.includes('exact_key_session'));
 });
 
-test('suppresses when key matches merchant lastTrigger memory', () => {
+test('suppresses when key matches merchant lastKey memory', () => {
   const { SuppressionEngine } = freshModules();
-  const merchant = buildMerchant({ suppressionKeys: { lastTrigger: 'offer:o1', lastCta: null, lastStrategy: null } });
+  const merchant = buildMerchant({ suppressionKeys: { lastKey: 'offer:o1', lastCta: null, lastStrategy: null } });
   const result = SuppressionEngine.check({ suppression_key: 'offer:o1', strategy: 'offer', cta: 'binary' }, merchant, new Set());
   assert.strictEqual(result.suppressed, true);
   assert.ok(result.reason.includes('exact_key_memory'));

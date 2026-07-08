@@ -99,6 +99,7 @@ class ReplyEngine {
       merchant,
       observations,
       turnNumber,
+      now,
     });
 
     if (guardDecision) {

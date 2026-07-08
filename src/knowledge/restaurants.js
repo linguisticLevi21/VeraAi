@@ -15,7 +15,7 @@ module.exports = {
     pronouns: 'you/your',
     hindiEnglishMix: true,
     taboos: ['guaranteed footfall', 'instant results', 'best in city'],
-    preferredClosings: ['Want to try this today?', 'Let me know and I'll set it up.', 'Reply YES to proceed.'],
+    preferredClosings: ['Want to try this today?', 'Let me know and I\'ll set it up.', 'Reply YES to proceed.'],
   },
 
   peerStats: {

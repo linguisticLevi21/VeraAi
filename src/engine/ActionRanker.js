@@ -18,6 +18,30 @@
  *
  * All dimensions return 0-1. Final score = weighted sum.
  */
+
+// Base weights — static constant, not re-allocated per call
+const BASE_WEIGHTS = Object.freeze({
+  urgency:           0.20,
+  merchant_fit:      0.15,
+  specificity:       0.15,
+  conversation_cont: 0.12,
+  business_impact:   0.12,
+  category_match:    0.10,
+  freshness:         0.08,
+  replay_safety:     0.04,
+  reply_probability: 0.03,
+  novelty:           0.01,
+});
+
+// Per-category weight overrides — only specify dimensions that differ from base
+// Normalisation is applied automatically before scoring.
+const CATEGORY_WEIGHT_OVERRIDES = Object.freeze({
+  dentists:    { reply_probability: 0.06, conversation_cont: 0.09, novelty: 0.01 },
+  pharmacies:  { reply_probability: 0.06, conversation_cont: 0.09, novelty: 0.01 },
+  restaurants: { conversation_cont: 0.14, urgency: 0.22, novelty: 0.01 },
+  gyms:        { conversation_cont: 0.14, merchant_fit: 0.16, novelty: 0.01 },
+  salons:      { business_impact: 0.14, freshness: 0.09, novelty: 0.01 },
+});
 class ActionRanker {
   /**
    * Scores all candidates and returns the best one.
@@ -36,6 +60,7 @@ class ActionRanker {
     const obsSet = new Set(observations.map((o) => o.observation));
     const topObsPriority = observations.length ? observations[0].priority : 5;
     const now = Date.now();
+    const weights = this._resolveWeights(merchant.scope);
 
     const scored = candidates.map((candidate) => {
       const dims = {
@@ -51,19 +76,6 @@ class ActionRanker {
         novelty: this._novelty(candidate, merchant),
       };
 
-      const weights = {
-        urgency:           0.20,
-        merchant_fit:      0.15,
-        specificity:       0.15,
-        conversation_cont: 0.12,
-        business_impact:   0.12,
-        category_match:    0.10,
-        freshness:         0.08,
-        replay_safety:     0.04,
-        reply_probability: 0.03,
-        novelty:           0.01,
-      };
-
       const total = Object.entries(weights).reduce((sum, [key, w]) => sum + dims[key] * w, 0);
 
       return { ...candidate, dims, total };
@@ -73,6 +85,26 @@ class ActionRanker {
     scored.sort((a, b) => b.total - a.total);
 
     return { best: scored[0], scored };
+  }
+
+  /**
+   * Resolves the weight vector for a given merchant scope.
+   * Applies category-specific overrides and re-normalises to sum=1.
+   *
+   * @param {string} scope
+   * @returns {object}
+   */
+  _resolveWeights(scope) {
+    const overrides = (scope && CATEGORY_WEIGHT_OVERRIDES[scope]) || {};
+    if (Object.keys(overrides).length === 0) return BASE_WEIGHTS;
+
+    // Merge overrides into a mutable copy
+    const merged = { ...BASE_WEIGHTS, ...overrides };
+
+    // Re-normalise so weights always sum to exactly 1.0
+    const total = Object.values(merged).reduce((s, v) => s + v, 0);
+    const factor = 1 / total;
+    return Object.fromEntries(Object.entries(merged).map(([k, v]) => [k, v * factor]));
   }
 
   // ---------------------------------------------------------------------------

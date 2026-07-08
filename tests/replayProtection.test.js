@@ -1,4 +1,4 @@
-﻿'use strict';
+'use strict';
 
 /**
  * Replay Protection Tests
@@ -76,7 +76,7 @@ test('Rule 1: session key collision suppresses', () => {
 test('Rule 2: memory key collision suppresses', () => {
   const sessionKeys = new Set();
   const composed = makeComposed({ suppression_key: 'offer:o_002' });
-  const merchant = makeMerchant({ suppressionKeys: { lastTrigger: 'offer:o_002', used: new Set() } });
+  const merchant = makeMerchant({ suppressionKeys: { lastKey: 'offer:o_002', used: new Set() } });
   const result = SuppressionEngine.check(composed, merchant, sessionKeys);
   assert(result.suppressed === true, 'Should be suppressed by memory key');
   assert(result.reason.includes('exact_key_memory'), `Reason: ${result.reason}`);

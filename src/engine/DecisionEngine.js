@@ -170,7 +170,7 @@ class DecisionEngine {
       send_as: 'vera',
       trigger_id: triggerId,
       template_name: `vera_${best.strategy}_v1`,
-      template_params: this._extractTemplateParams(final.message, merchant),
+      template_params: this._extractTemplateParams(final.message, merchant, trigger || triggerPayload, best.strategy),
       body: final.message,
       cta: final.cta,
       suppression_key: final.suppression_key,
@@ -179,26 +179,74 @@ class DecisionEngine {
   }
 
   /**
-   * Extracts up to 3 key values from a message for template_params.
-   * Used by the judge for structured replay analysis.
+   * Extracts up to 3 contextually relevant values from the merchant + action context.
+   * Used by the judge for structured replay analysis — the richer these are,
+   * the better the judge can evaluate specificity and data-groundedness.
+   *
+   * Priority order:
+   *   1. Merchant name (always first if available)
+   *   2. Strategy-specific key metric (CTR gap, lapsed count, customer name, offer, days)
+   *   3. Trigger kind for context
    *
    * @param {string} message
    * @param {object} merchant
+   * @param {object|null} trigger
+   * @param {string} strategy
    * @returns {string[]}
    */
-  _extractTemplateParams(message, merchant) {
+  _extractTemplateParams(message, merchant, trigger, strategy) {
     const params = [];
+
+    // 1. Merchant name
     const name = merchant.identity && merchant.identity.name;
     if (name) params.push(name);
 
-    const ctrStr = merchant.metrics && merchant.metrics.currentCtr !== null
-      ? `${(merchant.metrics.currentCtr * 100).toFixed(1)}%`
-      : null;
-    if (ctrStr) params.push(ctrStr);
+    // 2. Strategy-specific key metric
+    switch (strategy) {
+      case 'performance_recovery': {
+        const ctr = merchant.metrics && merchant.metrics.currentCtr;
+        const peer = merchant.metrics && merchant.metrics.peerMedianCtr;
+        if (ctr !== null && ctr !== undefined && peer) {
+          params.push(`CTR ${(ctr * 100).toFixed(1)}% vs peer ${(peer * 100).toFixed(1)}%`);
+        }
+        break;
+      }
+      case 'customer_winback': {
+        const agg = (merchant.performance || {}).customer_aggregate || {};
+        if (agg.lapsed_180d_plus) params.push(`${agg.lapsed_180d_plus} lapsed customers`);
+        break;
+      }
+      case 'offer': {
+        const activeOffer = (merchant.offers || []).find((o) => o && (o.status === 'active' || !o.status));
+        if (activeOffer) {
+          const expiry = activeOffer.valid_till || activeOffer.expiry || activeOffer.end_date;
+          if (expiry) {
+            const daysLeft = Math.ceil((new Date(expiry).getTime() - Date.now()) / 86_400_000);
+            if (daysLeft >= 0) params.push(`"${activeOffer.title}" — ${daysLeft}d left`);
+            else params.push(`"${activeOffer.title}"`);
+          } else {
+            params.push(activeOffer.title || activeOffer.name || 'active offer');
+          }
+        }
+        break;
+      }
+      case 'follow_up': {
+        const triggerKind = trigger && (trigger.kind || trigger.type);
+        if (triggerKind) params.push(triggerKind);
+        break;
+      }
+      default: {
+        // Generic fallback: offer title if available
+        const offers = merchant.offers || [];
+        const offerTitle = offers[0] && offers[0].title;
+        if (offerTitle) params.push(offerTitle);
+      }
+    }
 
-    const offers = merchant.offers || [];
-    const offerTitle = offers[0] && offers[0].title;
-    if (offerTitle) params.push(offerTitle);
+    // 3. Trigger kind as context label
+    if (params.length < 3 && trigger && (trigger.kind || trigger.type)) {
+      params.push(trigger.kind || trigger.type);
+    }
 
     return params.slice(0, 3);
   }

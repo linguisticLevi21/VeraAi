@@ -31,6 +31,7 @@ Thumbs.db
 
 # Competitive programming files (unrelated to this project)
 *.cpp
+competitive_programming/
 .cph/
 
 # Temporary

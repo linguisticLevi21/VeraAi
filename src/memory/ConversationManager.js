@@ -219,15 +219,18 @@ class ConversationManager {
     if (!body || body.trim().length === 0) return false;
     const normalised = body.trim().toLowerCase();
 
-    // Check the last AUTO_REPLY_THRESHOLD messages from this merchant
+    // _detectAutoReply is called BEFORE the current message is stored.
+    // So we need (AUTO_REPLY_THRESHOLD - 1) identical messages already in history,
+    // plus the current one being checked, to make THRESHOLD identical in a row.
+    const required = AUTO_REPLY_THRESHOLD - 1;
+
     const recent = m.conversationHistory
       .filter((msg) => msg.speaker === 'merchant')
-      .slice(-AUTO_REPLY_THRESHOLD);
+      .slice(-required);
 
-    // Require AT LEAST AUTO_REPLY_THRESHOLD identical messages (not just 2)
-    if (recent.length < AUTO_REPLY_THRESHOLD) return false;
+    if (recent.length < required) return false;
 
-    // Identical to all recent merchant messages → auto-reply
+    // All (THRESHOLD-1) stored messages must be identical to the current body
     return recent.every((msg) => msg.body.trim().toLowerCase() === normalised);
   }
 
