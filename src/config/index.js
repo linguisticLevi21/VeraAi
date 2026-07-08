@@ -54,14 +54,14 @@ const config = {
 
   bot: {
     teamName: optionalEnv('TEAM_NAME', 'Team Vera'),
-    teamMembers: optionalEnv('TEAM_MEMBERS', 'Alice,Bob')
+    teamMembers: optionalEnv('TEAM_MEMBERS', 'Alice, Bob')
       .split(',')
       .map((m) => m.trim())
       .filter(Boolean),
-    model: optionalEnv('BOT_MODEL', 'claude-opus-4-7'),
+    model: optionalEnv('BOT_MODEL', 'vera-deterministic-engine-v1'),
     approach: optionalEnv(
       'BOT_APPROACH',
-      'single-prompt composer with retrieval over digest items'
+      'Deterministic 8-step reasoning pipeline. No LLM. Same input always produces same output.'
     ),
     contactEmail: optionalEnv('CONTACT_EMAIL', 'team@example.com'),
     version: optionalEnv('BOT_VERSION', '1.0.0'),
